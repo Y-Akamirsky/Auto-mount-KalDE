@@ -16,23 +16,26 @@ SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 
 echo "--- Установка автомонтрирования для пользователя: $REAL_USER ---"
 
-# 1. Поиск дисков
+# 1. Поиск подходящих дисков
 echo "Поиск доступных дисков..."
-# Исключаем:
-# - Родительские устройства (--nodeps)
-# - Разделы без UUID (пустые или служебные)
-# - Любые разделы, где в точках монтирования есть / , /home, /boot или [SWAP]
-mapfile -t DISKS < <(lsblk -rno NAME,UUID,MOUNTPOINTS,SIZE --nodeps | grep -vE '(/|/home|/boot|/root|/var|/srv|\[SWAP\])' | awk '$2!=""')
+
+# Получаем UUID системного раздела, где находится корень (/)
+ROOT_UUID=$(findmnt -n -o UUID /)
+
+# Собираем только разделы (part), у которых есть UUID, и которые НЕ являются системными
+# Исключаем также SWAP и разделы без UUID (awk)
+mapfile -t DISKS < <(lsblk -rno NAME,UUID,MOUNTPOINTS,SIZE,TYPE | grep 'part$' | grep -v "$ROOT_UUID" | grep -vE '(/boot|\[SWAP\])' | awk '$2!=""')
 
 if [ ${#DISKS[@]} -eq 0 ]; then
-    echo "Подходящие диски не найдены. Возможно, они все используются системой."
+    echo "Подходящие диски не найдены."
     exit 1
 fi
 
 echo "Найдены следующие разделы:"
 for i in "${!DISKS[@]}"; do
-    # Читаем только нужные колонки
-    read -r name uuid mounts size <<< "${DISKS[$i]}"
+    # Разбиваем строку на переменные
+    read -r name uuid mounts size type <<< "${DISKS[$i]}"
+    # Выводим красиво: Имя (Размер) UUID
     echo "$((i+1))) $name ($size) UUID: $uuid"
 done
 
