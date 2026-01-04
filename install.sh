@@ -29,7 +29,7 @@ for i in "${!DISKS[@]}"; do
     echo "$((i+1))) $name ($size) UUID: $uuid"
 done
 
-read -p "Введите номера дисков через пробел, которые нужно добавить (например: 1 3): " CHOICES
+read -p "Введите номера дисков через пробел: " CHOICES < /dev/tty
 
 # 2. Создание конфига /etc/my_mounts.conf
 echo "# UUID                                 FOLDER_NAME" > $CONFIG_FILE
