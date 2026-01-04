@@ -16,24 +16,27 @@ SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 
 echo "--- Установка автомонтрирования для пользователя: $REAL_USER ---"
 
-# 1. Поиск дисков с улучшенной фильтрацией системного раздела
+# 1. Поиск дисков
 echo "Поиск доступных дисков..."
-# Исключаем разделы, которые монтируются в корень, home, boot или swap
-mapfile -t DISKS < <(lsblk -rno NAME,UUID,MOUNTPOINTS,SIZE | grep -vE '(/|/home|/boot|/root|\[SWAP\])' | grep -v '^$')
+# Исключаем:
+# - Родительские устройства (--nodeps)
+# - Разделы без UUID (пустые или служебные)
+# - Любые разделы, где в точках монтирования есть / , /home, /boot или [SWAP]
+mapfile -t DISKS < <(lsblk -rno NAME,UUID,MOUNTPOINTS,SIZE --nodeps | grep -vE '(/|/home|/boot|/root|/var|/srv|\[SWAP\])' | awk '$2!=""')
 
 if [ ${#DISKS[@]} -eq 0 ]; then
-    echo "Подходящие диски не найдены. Проверьте, не примонтированы ли они уже в систему."
+    echo "Подходящие диски не найдены. Возможно, они все используются системой."
     exit 1
 fi
 
 echo "Найдены следующие разделы:"
 for i in "${!DISKS[@]}"; do
-    IFS=' ' read -r name uuid mount size <<< "${DISKS[$i]}"
+    # Читаем только нужные колонки
+    read -r name uuid mounts size <<< "${DISKS[$i]}"
     echo "$((i+1))) $name ($size) UUID: $uuid"
 done
 
-# Чтение ввода напрямую из терминала для работы через curl
-read -p "Введите номера дисков через пробел: " CHOICES < /dev/tty
+read -p "Выберите номера дисков через пробел: " CHOICES < /dev/tty
 
 if [ -z "$CHOICES" ]; then
     echo "Выбор не сделан. Отмена."
