@@ -3,5 +3,5 @@
 
 ## Просто юзаните это:
 ```bash
-curl -sSL https://raw.githubusercontent.com/твой_ник/репо/main/install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/Y-Akamirsky/Auto-mount-KalDE/refs/heads/main/install.sh | sudo bash
 ```
