@@ -7,9 +7,10 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 REAL_USER=$(logname || echo $SUDO_USER || whoami)
+SERVICE_NAME="kde_fast_mount.service"
 CONFIG_FILE="/etc/kde_fast_mount.conf"
 SCRIPT_PATH="/usr/local/bin/kde_fast_mount.sh"
-SERVICE_PATH="/etc/systemd/system/kde_fast_mount.service"
+SERVICE_PATH="/etc/systemd/system/$SERVICE_NAME"
 
 echo "--- Установка автомонтрирования для пользователя: $REAL_USER ---"
 
@@ -102,8 +103,8 @@ EOF
 
 # 5. Активация
 systemctl daemon-reload
-systemctl enable mount-drives.service
-systemctl start mount-drives.service
+systemctl enable $SERVICE_NAME
+systemctl start $SERVICE_NAME
 
 echo "------------------------------------------------"
 echo "Установка завершена! Диски примонтированы в /run/media/$REAL_USER/"
